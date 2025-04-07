@@ -27,9 +27,11 @@ const config = {
     origin: process.env.NODE_ENV === 'production' 
       ? process.env.FRONTEND_URL 
       : 'http://localhost:3000',
-    methods: ['GET', 'POST'],
+    methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
+    exposedHeaders: ['Content-Disposition'],
+    credentials: true,
+    maxAge: 86400 // 24 hours
   }
 };
 
