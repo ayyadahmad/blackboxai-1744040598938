@@ -49,25 +49,52 @@ const UploadForm = () => {
     setError(null);
 
     try {
+      console.log('Starting upload:', {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type
+      });
+
       const formData = new FormData();
       formData.append('image', file);
 
-      // TODO: Replace with actual API endpoint
       const response = await fetch('http://localhost:3001/api/upload', {
         method: 'POST',
         body: formData,
       });
 
+      console.log('Server response status:', response.status);
+      const data = await response.json();
+      console.log('Server response:', data);
+
       if (!response.ok) {
-        throw new Error('Upload failed');
+        throw new Error(data.message || 'Upload failed');
       }
 
-      const data = await response.json();
       // Navigate to analysis page with the uploaded image ID
       navigate('/analysis', { state: { imageId: data.imageId } });
     } catch (err) {
-      setError('Failed to upload image. Please try again.');
-      console.error('Upload error:', err);
+      console.error('Upload error details:', {
+        error: err,
+        message: err.message,
+        fileName: file?.name,
+        fileSize: file?.size,
+        fileType: file?.type
+      });
+
+      let errorMessage = 'Failed to upload image. Please try again.';
+      
+      if (err.message.includes('size too large')) {
+        errorMessage = 'File size must be less than 5MB';
+      } else if (err.message.includes('Invalid file type')) {
+        errorMessage = 'Only JPEG, PNG and GIF files are allowed';
+      } else if (!navigator.onLine) {
+        errorMessage = 'Please check your internet connection';
+      } else if (err.message.includes('Failed to fetch')) {
+        errorMessage = 'Could not connect to server. Please try again.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
