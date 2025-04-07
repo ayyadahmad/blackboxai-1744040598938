@@ -14,19 +14,44 @@ const openai = new OpenAI({
 const analysisResults = new Map();
 
 exports.uploadImage = async (req, res, next) => {
-  if (!req.file) {
-    return next(new AppError('No file uploaded', 400));
-  }
-
   try {
+    // Check if file exists in request
+    if (!req.file) {
+      console.error('Upload error: No file in request');
+      return next(new AppError('No file uploaded', 400));
+    }
+
+    console.log('File received:', {
+      filename: req.file.filename,
+      mimetype: req.file.mimetype,
+      size: req.file.size
+    });
+
+    // Verify upload directory exists
+    const uploadDir = config.uploadDir;
+    try {
+      await fs.access(uploadDir);
+    } catch (err) {
+      console.error('Upload directory error:', err);
+      await fs.mkdir(uploadDir, { recursive: true });
+    }
+
     // Generate thumbnail for preview
-    const thumbnailPath = path.join(config.uploadDir, `thumb_${req.file.filename}`);
-    await sharp(req.file.path)
-      .resize(300, 300, {
-        fit: 'inside',
-        withoutEnlargement: true
-      })
-      .toFile(thumbnailPath);
+    const thumbnailPath = path.join(uploadDir, `thumb_${req.file.filename}`);
+    
+    try {
+      await sharp(req.file.path)
+        .resize(300, 300, {
+          fit: 'inside',
+          withoutEnlargement: true
+        })
+        .toFile(thumbnailPath);
+      
+      console.log('Thumbnail generated successfully');
+    } catch (sharpError) {
+      console.error('Thumbnail generation error:', sharpError);
+      // Continue even if thumbnail generation fails
+    }
 
     res.status(200).json({
       status: 'success',
@@ -34,7 +59,8 @@ exports.uploadImage = async (req, res, next) => {
       message: 'Image uploaded successfully'
     });
   } catch (error) {
-    return next(new AppError('Error processing uploaded image', 500));
+    console.error('Upload processing error:', error);
+    return next(new AppError(`Error processing uploaded image: ${error.message}`, 500));
   }
 };
 
