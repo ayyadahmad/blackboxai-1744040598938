@@ -5,7 +5,7 @@ const config = {
   port: process.env.PORT || 3001,
   openaiApiKey: process.env.OPENAI_API_KEY,
   nodeEnv: process.env.NODE_ENV || 'development',
-  uploadDir: path.join(__dirname, '..', '..', process.env.UPLOAD_DIR || 'uploads'),
+  uploadDir: path.join(process.cwd(), process.env.UPLOAD_DIR || 'uploads'),
   maxFileSize: parseInt(process.env.MAX_FILE_SIZE) || 5 * 1024 * 1024, // 5MB default
   
   // OpenAI Configuration
