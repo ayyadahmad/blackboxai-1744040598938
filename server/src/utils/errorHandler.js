@@ -24,6 +24,18 @@ const handleError = (err, req, res, next) => {
     }
   }
 
+  // Handle CORS errors
+  if (err.message.includes('CORS')) {
+    err.statusCode = 403;
+    err.message = 'CORS error: Request blocked due to security policy.';
+  }
+
+  // Handle file system errors
+  if (err.code === 'ENOENT') {
+    err.statusCode = 500;
+    err.message = 'Server error: Could not access upload directory.';
+  }
+
   // Log error details
   console.error('Error details:', {
     name: err.name,
@@ -31,6 +43,8 @@ const handleError = (err, req, res, next) => {
     message: err.message,
     path: req.path,
     method: req.method,
+    headers: req.headers,
+    body: req.body,
     timestamp: new Date().toISOString()
   });
 
